@@ -105,4 +105,8 @@ class SmsHelper
 
         return $this->leadModel->addDncForLead($lead, 'sms', null, DoNotContact::UNSUBSCRIBED);
     }
+
+    public function unsubscribeLead(Lead $contact)
+    {
+    }
 }
