@@ -112,14 +112,14 @@ SQL;
     {
         foreach ($this->rowsToMigrateSelectMultiselect as $rowToMigrate) {
             $properties   = unserialize($rowToMigrate['properties']);
-            $propertyList = explode('|', $properties['list']);
+            $propertyList = is_array($properties['list']) ? $properties['list'] : explode('|', $properties['list']);
 
             $convertedPropertyList = [];
 
             foreach ($propertyList as $property) {
                 $convertedPropertyList[] = [
-                    'label' => $property,
-                    'value' => $property,
+                    'label' => is_array($properties['list']) ? $property['label'] : $property,
+                    'value' => is_array($properties['list']) ? $property['value'] : $property,
                 ];
             }
 
