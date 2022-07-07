@@ -112,14 +112,19 @@ SQL;
     {
         foreach ($this->rowsToMigrateSelectMultiselect as $rowToMigrate) {
             $properties   = unserialize($rowToMigrate['properties']);
-            $propertyList = is_array($properties['list']) ? $properties['list'] : explode('|', $properties['list']);
+            // If it is already an array, we don't need to convert it, it's not supposed to happen but sometimes it
+            // simply does
+            if (is_array($properties['list'])) {
+                continue;
+            }
+            $propertyList = explode('|', $properties['list']);
 
             $convertedPropertyList = [];
 
             foreach ($propertyList as $property) {
                 $convertedPropertyList[] = [
-                    'label' => is_array($properties['list']) ? $property['label'] : $property,
-                    'value' => is_array($properties['list']) ? $property['value'] : $property,
+                    'label' => $property,
+                    'value' => $property,
                 ];
             }
 
