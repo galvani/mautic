@@ -77,28 +77,37 @@ class ActionDispatcher
 
         // this if statement can be removed when legacy dispatcher is removed
         if ($customEvent = $config->getBatchEventName()) {
+            printf(" ** before dispatch %s\n", memuse());
+
             $this->dispatcher->dispatch($customEvent, $pendingEvent);
 
+            printf(" ** after dispatch %s\n", memuse());
             $success = $pendingEvent->getSuccessful();
             $failed  = $pendingEvent->getFailures();
 
             $this->validateProcessedLogs($logs, $success, $failed);
+            printf(" ** after validateProcessedLogs %s\n", memuse());
 
             if ($success) {
                 $this->dispatchExecutedEvent($config, $event, $success);
+                printf(" ** after dispatchExecutedEvent %s\n", memuse());
             }
 
             if ($failed) {
                 $this->dispatchedFailedEvent($config, $failed);
+                printf(" ** after dispatchedFailedEvent %s\n", memuse());
             }
 
             // Dispatch legacy ON_EVENT_EXECUTION event for BC
             $this->legacyDispatcher->dispatchExecutionEvents($config, $success, $failed);
+            printf(" ** after dispatchExecutionEvents %s\n", memuse());
         }
 
         // Execute BC eventName or callback. Or support case where the listener has been converted to batchEventName but still wants to execute
         // eventName for BC support for plugins that could be listening to it's own custom event.
         $this->legacyDispatcher->dispatchCustomEvent($config, $logs, ($customEvent), $pendingEvent);
+        printf(" ** after dispatchCustomEvent %s\n", memuse());
+        printf("pendingEvent size %s\n", memuse(strlen(igbinary_serialize($pendingEvent))));
 
         return $pendingEvent;
     }

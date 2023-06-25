@@ -466,12 +466,15 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
             'lead',
             $args,
             function ($r) {
+                return; //DEBUG
                 if (!empty($this->triggerModel)) {
                     $r->setColor($this->triggerModel->getColorForLeadPoints($r->getPoints()));
                 }
                 $r->setAvailableSocialFields($this->availableSocialFields);
             }
         );
+
+        printf(" ## LeadRepo getEntitiesWithCustomFields after %s\n", memuse());
 
         $contactCount = isset($contacts['results']) ? count($contacts['results']) : count($contacts);
         if ($contactCount && (!empty($args['withPrimaryCompany']) || !empty($args['withChannelRules']))) {
@@ -572,11 +575,24 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
     {
         $alias = $this->getTableAlias();
         $q     = $this->getEntityManager()->createQueryBuilder();
-        $q->select($alias.', u, i,'.$order)
+        $q->select($alias.', u,'.$order)
             ->from('MauticLeadBundle:Lead', $alias, $alias.'.id')
             ->leftJoin($alias.'.ipAddresses', 'i')
             ->leftJoin($alias.'.owner', 'u')
             ->indexBy($alias, $alias.'.id');
+
+        return $q;
+    }
+
+    public function getEntitiesOrmQueryBuilderNoOrder()
+    {
+        $alias = $this->getTableAlias();
+        $q     = $this->getEntityManager()->createQueryBuilder();
+        $q->select($alias)
+            ->from('MauticLeadBundle:Lead', $alias, $alias.'.id')
+            ->leftJoin($alias.'.owner', 'u')
+            //->indexBy($alias, $alias.'.id')
+        ;
 
         return $q;
     }

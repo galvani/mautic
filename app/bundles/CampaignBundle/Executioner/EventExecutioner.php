@@ -160,7 +160,9 @@ class EventExecutioner
         $config = $this->collector->getEventConfig($event);
         $logs   = $this->eventLogger->fetchRotationAndGenerateLogsFromContacts($event, $config, $contacts, $isInactiveEvent);
 
+        printf(" ++ EE before execute logs %s\n", memuse());
         $this->executeLogs($event, $logs, $counter);
+        printf(" ++ EE after execute logs %s\n", memuse());
     }
 
     /**
@@ -190,9 +192,12 @@ class EventExecutioner
         switch ($event->getEventType()) {
             case Event::TYPE_ACTION:
                 $evaluatedContacts = $this->actionExecutioner->execute($config, $logs);
+                printf(" ++ EE before persist logs %s\n", memuse());
                 $this->persistLogs($logs);
+                printf(" ++ EE after persist logs %s\n", memuse());
                 $this->executeConditionEventsForContacts($event, $evaluatedContacts->getPassed(), $counter);
                 $this->executeActionEventsForContacts($event, $evaluatedContacts->getPassed(), $counter);
+                printf(" ++ EE after action and condition events  %s\n", memuse());
                 break;
             case Event::TYPE_CONDITION:
                 $evaluatedContacts = $this->conditionExecutioner->execute($config, $logs);

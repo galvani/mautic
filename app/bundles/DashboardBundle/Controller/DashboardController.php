@@ -2,6 +2,7 @@
 
 namespace Mautic\DashboardBundle\Controller;
 
+use Doctrine\ORM\EntityManager;
 use Mautic\CoreBundle\Controller\AbstractFormController;
 use Mautic\CoreBundle\Form\Type\DateRangeType;
 use Mautic\CoreBundle\Helper\InputHelper;
@@ -11,6 +12,7 @@ use Mautic\DashboardBundle\Dashboard\Widget as WidgetService;
 use Mautic\DashboardBundle\Entity\Widget;
 use Mautic\DashboardBundle\Form\Type\UploadType;
 use Mautic\DashboardBundle\Model\DashboardModel;
+use Mautic\LeadBundle\Entity\Lead;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -29,6 +31,29 @@ class DashboardController extends AbstractFormController
      */
     public function indexAction()
     {
+//
+//        /** @var EntityManager $em */
+//        $em = $this->get('doctrine.orm.entity_manager');
+//
+//        for($i=0;$i<12000;$i++) {
+//            $lead = new Lead();
+//            $lead
+//                ->setCountry(['cz', 'us', 'de'][rand(0, 2)])
+//                ->setCity('Prague')
+//                ->setFirstname('Oliver')
+//                ->setLastname('Lastname')
+//                ->setEmail('f' . uniqid() . 's@roland.com')
+//            ;
+//            $em->persist($lead);
+//            if ($i%200==0)
+//            {
+//                dump($i);
+//                $em->flush();
+//            }
+//        }
+//        echo $em::class;
+//        die();
+
         /** @var DashboardModel $model */
         $model   = $this->getModel('dashboard');
         $widgets = $model->getWidgets();

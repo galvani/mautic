@@ -47,6 +47,7 @@ class KickoffContactFinder
     {
         // Get list of all campaign leads; start is always zero in practice because of $pendingOnly
         $campaignContacts = $this->campaignRepository->getPendingContactIds($campaignId, $limiter);
+        printf(" ## KCF getContacts getPending start %s\n", memuse());
 
         if (empty($campaignContacts)) {
             // No new contacts found in the campaign
@@ -54,11 +55,26 @@ class KickoffContactFinder
             throw new NoContactsFoundException();
         }
 
-        $this->logger->debug('CAMPAIGN: Processing the following contacts: '.implode(', ', $campaignContacts));
+        //$this->logger->debug('CAMPAIGN: Processing the following contacts: '.implode(', ', $campaignContacts));
 
         // Fetch entity objects for the found contacts
+        $this->clear();
+        printf(" ## KCF getContacts after clear %s\n", memuse());
+
+//        for ($i=0;$i<10;$i++) {
+//            $contacts = $this->leadRepository->getContactCollection($campaignContacts);
+//            unset($contacts);
+//            printf("------- test run %s\n", memuse());
+//
+//        }
         $contacts = $this->leadRepository->getContactCollection($campaignContacts);
 
+        //die();
+        printf(" ## KCF getContacts after fetch %s\n", memuse());
+//        unset($campaignContacts);
+//        printf(" ## KCF getContacts after unset %s\n", memuse());
+//        gc_collect_cycles();
+//        printf(" ## KCF getContacts after gc_collect %s\n", memuse());
         if (!count($contacts)) {
             // Just a precaution in case non-existent contacts are lingering in the campaign leads table
             $this->logger->debug('CAMPAIGN: No contact entities found.');

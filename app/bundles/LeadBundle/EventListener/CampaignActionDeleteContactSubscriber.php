@@ -63,8 +63,11 @@ class CampaignActionDeleteContactSubscriber implements EventSubscriberInterface
         );
     }
 
+    private static $counter = 0;
+
     public function deleteContacts(PendingEvent $event)
     {
+        ++self::$counter;
         $contactIds = $event->getContactIds();
 
         $this->removedContactTracker->addRemovedContacts(
@@ -72,8 +75,16 @@ class CampaignActionDeleteContactSubscriber implements EventSubscriberInterface
             $contactIds
         );
 
+        //printf("\nbefore deleteEntities of : %s\n", memuse());
         $this->leadModel->deleteEntities($contactIds);
+        //printf("after deleteEntities %s\n", memuse());
+        //printf("event size %s\n", memuse(strlen(igbinary_serialize($event))));
 
+        if (self::$counter > 4) {
+            exit(self::$counter.' reached');
+        }
+        //printf("before passAll %s\n", memuse());
         $event->passAll();
+        //printf("after passAll %s\n", memuse());
     }
 }

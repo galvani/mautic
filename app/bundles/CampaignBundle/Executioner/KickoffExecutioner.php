@@ -211,8 +211,9 @@ class KickoffExecutioner implements ExecutionerInterface
                 $this->executioner->executeEventsForContacts($rootEvents, $contacts, $this->counter);
             }
 
+            printf(" ## KOE after events %s\n", memuse());
             $this->kickoffContactFinder->clear();
-
+            printf(" ## KOE after clear %s\n", memuse());
             if ($this->limiter->getContactId()) {
                 // No use making another call
                 break;
@@ -221,8 +222,13 @@ class KickoffExecutioner implements ExecutionerInterface
             $this->logger->debug('CAMPAIGN: Fetching the next batch of kickoff contacts starting with contact ID '.$batchMinContactId);
             $this->limiter->setBatchMinContactId($batchMinContactId);
 
+            printf(" ## KOE before new batch of contacts %s\n", memuse());
+            unset($contacts);
+            gc_collect_cycles();
+            printf(" ## KOE before new batch of cafter GC ontacts %s\n", memuse());
             // Get the next batch
             $contacts = $this->kickoffContactFinder->getContacts($this->campaign->getId(), $this->limiter);
+            printf(" ## KOE got new batch of contacts %s\n", memuse());
         }
     }
 }

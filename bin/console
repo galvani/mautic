@@ -20,6 +20,14 @@ define('MAUTIC_ROOT_DIR', realpath(__DIR__.'/..'));
 
 require_once __DIR__.'/../autoload.php';
 
+function memuse($num=null)
+{
+    $size = memory_get_usage(true);
+    $unit =['b', 'kb', 'mb', 'gb', 'tb', 'pb'];
+
+    return @round(($num ?? $size) / pow(1024, ($i=floor(log($size, 1024)))), 2).' '.$unit[$i];
+}
+
 use Mautic\CoreBundle\Console\Output\ConsoleDatetimeOutput;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
