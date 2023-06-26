@@ -77,16 +77,17 @@ class ActionDispatcher
 
         // this if statement can be removed when legacy dispatcher is removed
         if ($customEvent = $config->getBatchEventName()) {
-            printf(" ** before dispatch %s\n", memuse());
+            printf("!!!!!! ** before dispatch %s\n", memuse());
 
             $this->dispatcher->dispatch($customEvent, $pendingEvent);
 
-            printf(" ** after dispatch %s\n", memuse());
+            printf("!!!!!! ** after dispatch %s\n", memuse());
             $success = $pendingEvent->getSuccessful();
             $failed  = $pendingEvent->getFailures();
 
+            printf("!!!!!! ** before validate %s\n", memuse());
             $this->validateProcessedLogs($logs, $success, $failed);
-            printf(" ** after validateProcessedLogs %s\n", memuse());
+            printf("!!!!!!  ** after validateProcessedLogs %s\n", memuse());
 
             if ($success) {
                 $this->dispatchExecutedEvent($config, $event, $success);

@@ -366,9 +366,20 @@ class CampaignRepository extends CommonRepository
             );
         }
 
-        $result = $q->execute()->fetch();
+        $result = $q->execute()->fetchAssociative();
+        $cnt    = new CountResult($result['the_count'], $result['min_id'], $result['max_id']);
+        $q      =null;
+        unset($q);
+        $result=null;
+        unset($result);
+        gc_collect_cycles();
+        try {
+            $this->getEntityManager()->clear($this->_entityName);
+        } catch (\Exception $e) {
+        }
+        gc_collect_cycles();
 
-        return new CountResult($result['the_count'], $result['min_id'], $result['max_id']);
+        return $cnt;
     }
 
     /**
@@ -380,11 +391,13 @@ class CampaignRepository extends CommonRepository
      */
     public function getPendingContactIds($campaignId, ContactLimiter $limiter)
     {
+        $memNow = memory_get_usage(true);
         if ($limiter->hasCampaignLimit() && 0 === $limiter->getCampaignLimitRemaining()) {
             return [];
         }
 
         $q = $this->getSlaveConnection($limiter)->createQueryBuilder();
+        //$q = $this->getSlaveConnection($limiter)->createQueryBuilder();
 
         $q->select('cl.lead_id')
             ->from(MAUTIC_TABLE_PREFIX.'campaign_leads', 'cl')
@@ -429,6 +442,8 @@ class CampaignRepository extends CommonRepository
         if ($limiter->hasCampaignLimit()) {
             $limiter->reduceCampaignLimitRemaining(count($leads));
         }
+
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__, memuse(), memuse(memory_get_usage(true) - $memNow));
 
         return $leads;
     }

@@ -58,9 +58,6 @@ class ActionExecutioner implements EventInterface
         // Execute to process the batch of contacts
         $pendingEvent = $this->dispatcher->dispatchEvent($config, $event, $logs);
 
-        printf(" -- AE after dispatch, event size %s\n", memuse(strlen(igbinary_serialize($event))));
-        printf(" -- AE after dispatch, log size %s\n", memuse(strlen(igbinary_serialize($logs))));
-
         printf(" -- AE logger before %s\n", memuse());
         /** @var ArrayCollection $contacts */
         $passed = $this->eventLogger->extractContactsFromLogs($pendingEvent->getSuccessful());

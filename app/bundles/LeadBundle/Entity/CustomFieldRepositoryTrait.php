@@ -4,6 +4,7 @@ namespace Mautic\LeadBundle\Entity;
 
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Result;
 use Mautic\LeadBundle\Controller\ListController;
 use Mautic\LeadBundle\Helper\CustomFieldHelper;
 
@@ -54,6 +55,7 @@ trait CustomFieldRepositoryTrait
 
             printf(" ## CFR before fetchAll %s\n", memuse());
             //get a total count
+            $sql    = $dq->getSQL();
             $result = $dq->execute()->fetchAll();
             printf(" ## CFR after fetchAll %s\n", memuse());
             $total  = ($result) ? $result[0]['count'] : 0;
@@ -89,26 +91,28 @@ trait CustomFieldRepositoryTrait
             printf(" === ## CFR before result iteration %s\n", memuse());
             printf("------- checkpoint #2 results size %s\n", memuse(mb_strlen(igbinary_serialize($results))));
 
-            foreach ($results as $result) {
-                $id = $result['id'];
-                //unset all the columns that are not fields
-                $this->removeNonFieldColumns($result, $fixedFields);
+            $ids = array_column($results, 'id');
 
-                foreach ($result as $k => $r) {
-                    if (isset($fields[$k])) {
-                        $fieldValues[$id][$fields[$k]['group']][$fields[$k]['alias']]          = $fields[$k];
-                        $fieldValues[$id][$fields[$k]['group']][$fields[$k]['alias']]['value'] = $r;
-                    }
-                }
-
-                //make sure each group key is present
-                foreach ($groups as $g) {
-                    if (!isset($fieldValues[$id][$g])) {
-                        $fieldValues[$id][$g] = [];
-                    }
-                }
-                unset($result);
-            }
+//            foreach ($results as $result) {
+//                $id = $result['id'];
+//                //unset all the columns that are not fields
+//                //$this->removeNonFieldColumns($result, $fixedFields);
+//
+//                foreach ($result as $k => $r) {
+//                    if (isset($fields[$k])) {
+//                        $fieldValues[$id][$fields[$k]['group']][$fields[$k]['alias']]          = $fields[$k];
+//                        $fieldValues[$id][$fields[$k]['group']][$fields[$k]['alias']]['value'] = $r;
+//                    }
+//                }
+//
+//                //make sure each group key is present
+//                foreach ($groups as $g) {
+//                    if (!isset($fieldValues[$id][$g])) {
+//                        $fieldValues[$id][$g] = [];
+//                    }
+//                }
+//                unset($result);
+//            }
 
 //            printf("------- checkpoint #2 size %s\n", memuse(strlen(igbinary_serialize($fieldValues))));
 //            printf("------- checkpoint #2 results size %s\n", memuse(strlen(igbinary_serialize($results))));
@@ -118,7 +122,7 @@ trait CustomFieldRepositoryTrait
 
             printf("------- checkpoint #2 %s\n", memuse());
             //get an array of IDs for ORM query
-            $ids = array_keys($fieldValues);
+            //$ids = array_keys($fieldValues);
 
             if (count($ids)) {
                 //ORM
@@ -162,14 +166,25 @@ trait CustomFieldRepositoryTrait
 //                    ->getResult();
                 try {
                     //$results = $q->getQuery()->toIterable([]);
-                    $results = $q->getQuery()->toIterable();
+                    $results = (array) $q->getQuery()->getResult();
                     unset($q);
                 } catch (\Exception $e) {
                     dump($e->getMessage());
                 }
                 //dump($results); die();
-                printf(" === ## CFR after another query %s\n", memuse());
-
+                try {
+                    printf(" === ## CFR after another query %s\n", memuse());
+                    $vars = get_defined_vars();
+                    foreach ($vars as $var => $val) {
+                        echo '-'.$var."\n";
+                        //$resultsCallback(['ssss']);
+                        printf("%s => %s\n", $var, $var); // strlen(serialize($val)));
+                    }
+                } catch (\Exception $e) {
+                    dump($e);
+                }
+                $resultsCallback(['ssss']);
+                exit();
                 //assign fields
                 /** @var Lead $r */
 //                foreach ($resultsI as $r) {

@@ -157,12 +157,17 @@ class EventExecutioner
             return;
         }
 
+        $memNow = memory_get_usage(true);
         $config = $this->collector->getEventConfig($event);
-        $logs   = $this->eventLogger->fetchRotationAndGenerateLogsFromContacts($event, $config, $contacts, $isInactiveEvent);
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__, memuse(), memuse(memory_get_usage(true) - $memNow));
 
-        printf(" ++ EE before execute logs %s\n", memuse());
+        $memNow = memory_get_usage(true);
+        $logs   = $this->eventLogger->fetchRotationAndGenerateLogsFromContacts($event, $config, $contacts, $isInactiveEvent);
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__, memuse(), memuse(memory_get_usage(true) - $memNow));
+
+        $memNow = memory_get_usage(true);
         $this->executeLogs($event, $logs, $counter);
-        printf(" ++ EE after execute logs %s\n", memuse());
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__, memuse(), memuse(memory_get_usage(true) - $memNow));
     }
 
     /**

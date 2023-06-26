@@ -462,6 +462,10 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
      */
     public function getEntities(array $args = [])
     {
+        $filter = ['id'=>$args['filter']['force'][0]['value']];
+        $ents   = $this->findBy($filter);
+
+        return $ents;
         $contacts = $this->getEntitiesWithCustomFields(
             'lead',
             $args,

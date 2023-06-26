@@ -139,7 +139,10 @@ class KickoffExecutioner implements ExecutionerInterface
         $this->logger->debug('CAMPAIGN: Processing the following events: '.implode(', ', $this->rootEvents->getKeys()));
         $totalKickoffEvents = 0;
         if (!($this->output instanceof NullOutput)) {
+            //@DEBUG this costs 2MB
+            $memNow             = memory_get_usage(true);
             $totalContacts      = $this->kickoffContactFinder->getContactCount($this->campaign->getId(), $this->rootEvents->getKeys(), $this->limiter);
+            printf("%s->%s: %s\n", (new \ReflectionClass($this))->getShortName(), __METHOD__, memuse(memory_get_usage(true) - $memNow));
             $totalKickoffEvents = $totalRootEvents * $totalContacts;
 
             $this->output->writeln(
@@ -175,11 +178,17 @@ class KickoffExecutioner implements ExecutionerInterface
         $this->counter->advanceEventCount($this->rootEvents->count());
 
         // Loop over contacts until the entire campaign is executed
+        $memNow   = memory_get_usage(true);
         $contacts = $this->kickoffContactFinder->getContacts($this->campaign->getId(), $this->limiter);
+        printf("%s->%s: %s\n", (new \ReflectionClass($this))->getShortName(), __METHOD__, memuse(memory_get_usage(true) - $memNow));
         while ($contacts && $contacts->count()) {
-            $batchMinContactId = max($contacts->getKeys()) + 1;
-            $rootEvents        = clone $this->rootEvents;
-
+            try {
+                $batchMinContactId = max($contacts->getKeys()) + 1;
+                $rootEvents        = clone $this->rootEvents;
+            } catch (\Exception $exception) {
+                dump($exception);
+                exit();
+            }
             /** @var Event $event */
             foreach ($rootEvents as $key => $event) {
                 $this->progressBar->advance($contacts->count());
@@ -206,14 +215,15 @@ class KickoffExecutioner implements ExecutionerInterface
                 }
             }
 
+            printf(" ## KOE before execute events %s\n", memuse());
             if ($rootEvents->count()) {
                 // Execute the events for the batch of contacts
+                $memNow = memory_get_usage(true);
                 $this->executioner->executeEventsForContacts($rootEvents, $contacts, $this->counter);
+                printf('%s->%s: %s', basename(__CLASS__), __METHOD__, memuse(memory_get_usage(true) - $memNow));
             }
 
             printf(" ## KOE after events %s\n", memuse());
-            $this->kickoffContactFinder->clear();
-            printf(" ## KOE after clear %s\n", memuse());
             if ($this->limiter->getContactId()) {
                 // No use making another call
                 break;
