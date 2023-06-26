@@ -462,24 +462,20 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
      */
     public function getEntities(array $args = [])
     {
-        $filter = ['id'=>$args['filter']['force'][0]['value']];
-        $ents   = $this->findBy($filter);
-
-        return $ents;
+        $memNow   = memory_get_usage(true);
         $contacts = $this->getEntitiesWithCustomFields(
             'lead',
             $args,
             function ($r) {
-                return; //DEBUG
                 if (!empty($this->triggerModel)) {
                     $r->setColor($this->triggerModel->getColorForLeadPoints($r->getPoints()));
                 }
                 $r->setAvailableSocialFields($this->availableSocialFields);
             }
         );
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
 
-        printf(" ## LeadRepo getEntitiesWithCustomFields after %s\n", memuse());
-
+        $memNow       = memory_get_usage(true);
         $contactCount = isset($contacts['results']) ? count($contacts['results']) : count($contacts);
         if ($contactCount && (!empty($args['withPrimaryCompany']) || !empty($args['withChannelRules']))) {
             $withTotalCount = (array_key_exists('withTotalCount', $args) && $args['withTotalCount']);
@@ -547,6 +543,8 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
             }
         }
 
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
+
         return $contacts;
     }
 
@@ -579,24 +577,11 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
     {
         $alias = $this->getTableAlias();
         $q     = $this->getEntityManager()->createQueryBuilder();
-        $q->select($alias.', u,'.$order)
+        $q->select($alias.', u, i,'.$order)
             ->from('MauticLeadBundle:Lead', $alias, $alias.'.id')
             ->leftJoin($alias.'.ipAddresses', 'i')
             ->leftJoin($alias.'.owner', 'u')
             ->indexBy($alias, $alias.'.id');
-
-        return $q;
-    }
-
-    public function getEntitiesOrmQueryBuilderNoOrder()
-    {
-        $alias = $this->getTableAlias();
-        $q     = $this->getEntityManager()->createQueryBuilder();
-        $q->select($alias)
-            ->from('MauticLeadBundle:Lead', $alias, $alias.'.id')
-            ->leftJoin($alias.'.owner', 'u')
-            //->indexBy($alias, $alias.'.id')
-        ;
 
         return $q;
     }

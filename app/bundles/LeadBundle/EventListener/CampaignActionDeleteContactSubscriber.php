@@ -63,11 +63,9 @@ class CampaignActionDeleteContactSubscriber implements EventSubscriberInterface
         );
     }
 
-    private static $counter = 0;
-
     public function deleteContacts(PendingEvent $event)
     {
-        ++self::$counter;
+        $memNow     = memory_get_usage(true);
         $contactIds = $event->getContactIds();
 
         $this->removedContactTracker->addRemovedContacts(
@@ -75,16 +73,13 @@ class CampaignActionDeleteContactSubscriber implements EventSubscriberInterface
             $contactIds
         );
 
-        //printf("\nbefore deleteEntities of : %s\n", memuse());
-        $this->leadModel->deleteEntities($contactIds);
-        //printf("after deleteEntities %s\n", memuse());
-        //printf("event size %s\n", memuse(strlen(igbinary_serialize($event))));
+        //$this->leadModel->deleteEntities($contactIds);
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
 
-        if (self::$counter > 4) {
-            exit(self::$counter.' reached');
-        }
-        //printf("before passAll %s\n", memuse());
+        $memNow = memory_get_usage(true);
         $event->passAll();
-        //printf("after passAll %s\n", memuse());
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
+        gc_collect_cycles();
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
     }
 }

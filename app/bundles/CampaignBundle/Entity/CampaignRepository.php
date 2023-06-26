@@ -366,20 +366,9 @@ class CampaignRepository extends CommonRepository
             );
         }
 
-        $result = $q->execute()->fetchAssociative();
-        $cnt    = new CountResult($result['the_count'], $result['min_id'], $result['max_id']);
-        $q      =null;
-        unset($q);
-        $result=null;
-        unset($result);
-        gc_collect_cycles();
-        try {
-            $this->getEntityManager()->clear($this->_entityName);
-        } catch (\Exception $e) {
-        }
-        gc_collect_cycles();
+        $result = $q->execute()->fetch();
 
-        return $cnt;
+        return new CountResult($result['the_count'], $result['min_id'], $result['max_id']);
     }
 
     /**
@@ -397,7 +386,6 @@ class CampaignRepository extends CommonRepository
         }
 
         $q = $this->getSlaveConnection($limiter)->createQueryBuilder();
-        //$q = $this->getSlaveConnection($limiter)->createQueryBuilder();
 
         $q->select('cl.lead_id')
             ->from(MAUTIC_TABLE_PREFIX.'campaign_leads', 'cl')

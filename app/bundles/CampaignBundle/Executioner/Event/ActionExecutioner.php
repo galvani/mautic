@@ -54,18 +54,14 @@ class ActionExecutioner implements EventInterface
             throw new CannotProcessEventException('Cannot process event ID '.$event->getId().' as an action.');
         }
 
-        printf(" -- AE before dispatch %s\n", memuse());
+        $memNow = memory_get_usage(true);
         // Execute to process the batch of contacts
         $pendingEvent = $this->dispatcher->dispatchEvent($config, $event, $logs);
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
 
-        printf(" -- AE logger before %s\n", memuse());
         /** @var ArrayCollection $contacts */
         $passed = $this->eventLogger->extractContactsFromLogs($pendingEvent->getSuccessful());
-        printf(" -- AE passed logger after %s\n", memuse());
         $failed = $this->eventLogger->extractContactsFromLogs($pendingEvent->getFailures());
-        printf(" -- AE failed logger after %s\n", memuse());
-        $evalCont = new EvaluatedContacts($passed, $failed);
-        printf(" -- AE after evalContacts created %s\n", memuse());
 
         return new EvaluatedContacts($passed, $failed);
     }

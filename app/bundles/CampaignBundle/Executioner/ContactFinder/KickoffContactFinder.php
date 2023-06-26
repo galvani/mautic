@@ -53,16 +53,13 @@ class KickoffContactFinder
 
             throw new NoContactsFoundException();
         }
+
         $this->logger->debug('CAMPAIGN: Processing the following contacts: '.implode(', ', $campaignContacts));
 
+        $memNow = memory_get_usage(true);
         // Fetch entity objects for the found contacts
-        $this->clear();
-
-        for ($i=0; $i < 10; ++$i) {
-            $contacts = $this->leadRepository->getContactCollection($campaignContacts);
-            unset($contacts);
-        }
         $contacts = $this->leadRepository->getContactCollection($campaignContacts);
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
 
         if (!count($contacts)) {
             // Just a precaution in case non-existent contacts are lingering in the campaign leads table

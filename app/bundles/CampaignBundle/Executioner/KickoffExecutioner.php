@@ -106,8 +106,13 @@ class KickoffExecutioner implements ExecutionerInterface
         $this->counter  = new Counter();
 
         try {
+            $memNow = memory_get_usage(true);
             $this->prepareForExecution();
+            printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
+
+            $memNow = memory_get_usage(true);
             $this->executeOrScheduleEvent();
+            printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
         } catch (NoContactsFoundException $exception) {
             $this->logger->debug('CAMPAIGN: No more contacts to process');
         } catch (NoEventsFoundException $exception) {
@@ -223,7 +228,8 @@ class KickoffExecutioner implements ExecutionerInterface
                 printf('%s->%s: %s', basename(__CLASS__), __METHOD__, memuse(memory_get_usage(true) - $memNow));
             }
 
-            printf(" ## KOE after events %s\n", memuse());
+            $this->kickoffContactFinder->clear();
+
             if ($this->limiter->getContactId()) {
                 // No use making another call
                 break;
@@ -232,13 +238,8 @@ class KickoffExecutioner implements ExecutionerInterface
             $this->logger->debug('CAMPAIGN: Fetching the next batch of kickoff contacts starting with contact ID '.$batchMinContactId);
             $this->limiter->setBatchMinContactId($batchMinContactId);
 
-            printf(" ## KOE before new batch of contacts %s\n", memuse());
-            unset($contacts);
-            gc_collect_cycles();
-            printf(" ## KOE before new batch of cafter GC ontacts %s\n", memuse());
             // Get the next batch
             $contacts = $this->kickoffContactFinder->getContacts($this->campaign->getId(), $this->limiter);
-            printf(" ## KOE got new batch of contacts %s\n", memuse());
         }
     }
 }

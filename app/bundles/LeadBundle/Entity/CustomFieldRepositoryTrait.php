@@ -4,7 +4,6 @@ namespace Mautic\LeadBundle\Entity;
 
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Doctrine\DBAL\Result;
 use Mautic\LeadBundle\Controller\ListController;
 use Mautic\LeadBundle\Helper\CustomFieldHelper;
 
@@ -28,9 +27,7 @@ trait CustomFieldRepositoryTrait
      */
     public function getEntitiesWithCustomFields($object, $args, $resultsCallback = null)
     {
-        printf(" ## CFR before getList %s\n", memuse());
         [$fields, $fixedFields] = $this->getCustomFieldList($object);
-        printf(" ## CFR after getList %s\n", memuse());
 
         //Fix arguments if necessary
         $args = $this->convertOrmProperties($this->getClassName(), $args);
@@ -53,11 +50,8 @@ trait CustomFieldRepositoryTrait
                 $dq->resetQueryPart('groupBy');
             }
 
-            printf(" ## CFR before fetchAll %s\n", memuse());
             //get a total count
-            $sql    = $dq->getSQL();
             $result = $dq->execute()->fetchAll();
-            printf(" ## CFR after fetchAll %s\n", memuse());
             $total  = ($result) ? $result[0]['count'] : 0;
         } else {
             $total = $args['count'];
@@ -77,9 +71,7 @@ trait CustomFieldRepositoryTrait
             $dq->resetQueryPart('select');
             $this->buildSelectClause($dq, $args);
 
-            printf(" ## CFR before second fetchAll %s\n", memuse());
-            $results = $dq->execute()->fetchAllAssociative();
-            printf(" ## CFR after second fetchAll %s\n", memuse());
+            $results = $dq->execute()->fetchAll();
             if (isset($args['route']) && ListController::ROUTE_SEGMENT_CONTACTS == $args['route']) {
                 unset($args['select']); //Our purpose of getting list of ids has already accomplished. We no longer need this.
             }
@@ -93,32 +85,26 @@ trait CustomFieldRepositoryTrait
 
             $ids = array_column($results, 'id');
 
-//            foreach ($results as $result) {
-//                $id = $result['id'];
-//                //unset all the columns that are not fields
-//                //$this->removeNonFieldColumns($result, $fixedFields);
-//
-//                foreach ($result as $k => $r) {
-//                    if (isset($fields[$k])) {
-//                        $fieldValues[$id][$fields[$k]['group']][$fields[$k]['alias']]          = $fields[$k];
-//                        $fieldValues[$id][$fields[$k]['group']][$fields[$k]['alias']]['value'] = $r;
-//                    }
-//                }
-//
-//                //make sure each group key is present
-//                foreach ($groups as $g) {
-//                    if (!isset($fieldValues[$id][$g])) {
-//                        $fieldValues[$id][$g] = [];
-//                    }
-//                }
-//                unset($result);
-//            }
+            foreach ($results as $result) {
+                $id = $result['id'];
+                //unset all the columns that are not fields
+                //$this->removeNonFieldColumns($result, $fixedFields);
 
-//            printf("------- checkpoint #2 size %s\n", memuse(strlen(igbinary_serialize($fieldValues))));
-//            printf("------- checkpoint #2 results size %s\n", memuse(strlen(igbinary_serialize($results))));
+                foreach ($result as $k => $r) {
+                    if (isset($fields[$k])) {
+                        $fieldValues[$id][$fields[$k]['group']][$fields[$k]['alias']]          = $fields[$k];
+                        $fieldValues[$id][$fields[$k]['group']][$fields[$k]['alias']]['value'] = $r;
+                    }
+                }
 
-            dump($this->getEntityManager()->getUnitOfWork()->size());
-            //die();
+                //make sure each group key is present
+                foreach ($groups as $g) {
+                    if (!isset($fieldValues[$id][$g])) {
+                        $fieldValues[$id][$g] = [];
+                    }
+                }
+                unset($result);
+            }
 
             printf("------- checkpoint #2 %s\n", memuse());
             //get an array of IDs for ORM query
@@ -144,7 +130,7 @@ trait CustomFieldRepositoryTrait
 
                 //ORM - generates lead entities
                 /** @var \Doctrine\ORM\QueryBuilder $q */
-                $q = $this->getEntitiesOrmQueryBuilderNoOrder();
+                $q = $this->getEntitiesOrmQueryBuilder($order);
                 $this->buildSelectClause($dq, $args);
 
                 //only pull the leads as filtered via DBAL
@@ -152,63 +138,27 @@ trait CustomFieldRepositoryTrait
                     $q->expr()->in($this->getTableAlias().'.id', ':entityIds')
                 )->setParameter('entityIds', $ids);
 
-                //$q->orderBy('ORD', 'ASC');
+                $q->orderBy('ORD', 'ASC');
 
-                $this->getEntityManager()->getConnection()->getConfiguration()->setSQLLogger(null);
+                $results = $q->getQuery()
+                    ->useQueryCache(false) // the query contains ID's, so there is no use in caching it
+                    ->getResult();
 
-                echo $q->getDQL();
-                printf(" === ## CFR before another query %s\n", memuse());
-                //dump($q);
-                //$query = $q->getQuery();
-                //dump($query->toIterable());
-//                $results = $query
-//                    ->useQueryCache(true) // the query contains ID's, so there is no use in caching it
-//                    ->getResult();
-                try {
-                    //$results = $q->getQuery()->toIterable([]);
-                    $results = (array) $q->getQuery()->getResult();
-                    unset($q);
-                } catch (\Exception $e) {
-                    dump($e->getMessage());
-                }
-                //dump($results); die();
-                try {
-                    printf(" === ## CFR after another query %s\n", memuse());
-                    $vars = get_defined_vars();
-                    foreach ($vars as $var => $val) {
-                        echo '-'.$var."\n";
-                        //$resultsCallback(['ssss']);
-                        printf("%s => %s\n", $var, $var); // strlen(serialize($val)));
-                    }
-                } catch (\Exception $e) {
-                    dump($e);
-                }
-                $resultsCallback(['ssss']);
-                exit();
                 //assign fields
                 /** @var Lead $r */
-//                foreach ($resultsI as $r) {
-//                    $id = $r->getId();
-//                    $r->setFields($fieldValues[$id]);
-//
-//                    if (is_callable($resultsCallback)) {
-//                        $resultsCallback($r);
-//                    }
-//                    $results[$id] = $r;
-//                }
-                unset($resultsI);
-                unset($q);
-                unset($fieldValues);
-                $this->getEntityManager()->clear();
-                printf(" === ## CFR after populating  %s\n", memuse());
+                foreach ($results as $r) {
+                    $id = $r->getId();
+                    $r->setFields($fieldValues[$id]);
+
+                    if (is_callable($resultsCallback)) {
+                        $resultsCallback($r);
+                    }
+                }
             } else {
                 $results = [];
             }
         }
 
-        $results = (array) $results;
-        //printf(" ## CER result size %s\n", memuse(strlen(igbinary_serialize($results))));
-        //die();
         return (!empty($args['withTotalCount'])) ?
             [
                 'count'   => $total,

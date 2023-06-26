@@ -245,11 +245,8 @@ class EventLogger
             return;
         }
 
-        try {
-            $this->leadEventLogRepository->saveEntities($this->persistQueue->getValues());
-        } catch (\Exception $exception) {
-            dump($exception->getMessage());
-        }
+        $this->leadEventLogRepository->saveEntities($this->persistQueue->getValues());
+
         // Push them into the logs ArrayCollection to be used later.
         /** @var LeadEventLog $log */
         foreach ($this->persistQueue as $log) {

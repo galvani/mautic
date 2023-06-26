@@ -303,6 +303,7 @@ class FormModel extends AbstractCommonModel
                 //set the id for use in events
                 $entity->deletedId = $id;
                 $this->dispatchEvent('post_delete', $entity, false, $event);
+                $this->em->clear($entity::class);
             }
             if (0 === (($k + 1) % $batchSize)) {
                 $this->em->flush();
