@@ -73,7 +73,7 @@ class CampaignActionDeleteContactSubscriber implements EventSubscriberInterface
             $contactIds
         );
 
-        //$this->leadModel->deleteEntities($contactIds);
+        $this->leadModel->deleteEntities($contactIds);
         printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
 
         $memNow = memory_get_usage(true);

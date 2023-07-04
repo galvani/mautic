@@ -178,6 +178,7 @@ class KickoffExecutioner implements ExecutionerInterface
      */
     private function executeOrScheduleEvent()
     {
+        $counter=0;
         // Use the same timestamp across all contacts processed
         $now = new \DateTime();
         $this->counter->advanceEventCount($this->rootEvents->count());
@@ -229,6 +230,10 @@ class KickoffExecutioner implements ExecutionerInterface
             }
 
             $this->kickoffContactFinder->clear();
+            $contacts = null;
+            gc_collect_cycles();
+            printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__, memuse(), memuse(memory_get_usage(true) - $memNow));
+            unset($contacts);
 
             if ($this->limiter->getContactId()) {
                 // No use making another call
@@ -238,7 +243,6 @@ class KickoffExecutioner implements ExecutionerInterface
             $this->logger->debug('CAMPAIGN: Fetching the next batch of kickoff contacts starting with contact ID '.$batchMinContactId);
             $this->limiter->setBatchMinContactId($batchMinContactId);
 
-            // Get the next batch
             $contacts = $this->kickoffContactFinder->getContacts($this->campaign->getId(), $this->limiter);
         }
     }

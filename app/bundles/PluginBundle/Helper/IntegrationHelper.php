@@ -94,6 +94,7 @@ class IntegrationHelper
      */
     public function getIntegrationObjects($specificIntegrations = null, $withFeatures = null, $alphabetical = false, $pluginFilter = null, $publishedOnly = false)
     {
+        $memNow = memory_get_usage(true);
         // Build the service classes
         if (empty($this->available)) {
             $this->available = [];
@@ -322,6 +323,8 @@ class IntegrationHelper
                 return strcasecmp($aName, $bName);
             });
         }
+
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
 
         return $returnServices;
     }

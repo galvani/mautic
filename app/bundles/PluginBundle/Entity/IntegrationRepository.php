@@ -14,14 +14,11 @@ class IntegrationRepository extends CommonRepository
         $services = $this->createQueryBuilder('i')
             ->join('i.plugin', 'p')
             ->getQuery()
+            ->setCacheable(false)
+            ->expireResultCache(true)
             ->getResult();
 
-        $results = [];
-        foreach ($services as $s) {
-            $results[$s->getName()] = $s;
-        }
-
-        return $results;
+        return $services;
     }
 
     /**

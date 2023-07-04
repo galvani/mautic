@@ -56,9 +56,12 @@ class KickoffContactFinder
 
         $this->logger->debug('CAMPAIGN: Processing the following contacts: '.implode(', ', $campaignContacts));
 
+        $contacts = $this->leadRepository->findBy(['id'=>$campaignContacts]);
+
+        return new ArrayCollection($contacts);
         $memNow = memory_get_usage(true);
         // Fetch entity objects for the found contacts
-        $contacts = $this->leadRepository->getContactCollection($campaignContacts);
+        //$contacts = $this->leadRepository->getContactCollection($campaignContacts);
         printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
 
         if (!count($contacts)) {

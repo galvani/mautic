@@ -168,6 +168,8 @@ class EventExecutioner
         $memNow = memory_get_usage(true);
         $this->executeLogs($event, $logs, $counter);
         printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__, memuse(), memuse(memory_get_usage(true) - $memNow));
+        $contacts = new ArrayCollection();
+        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__, memuse(), memuse(memory_get_usage(true) - $memNow));
     }
 
     /**

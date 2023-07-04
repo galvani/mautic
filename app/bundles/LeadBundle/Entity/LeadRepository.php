@@ -462,17 +462,22 @@ class LeadRepository extends CommonRepository implements CustomFieldRepositoryIn
      */
     public function getEntities(array $args = [])
     {
+        $args['ignore_paginator'] = true;
+
+        return parent::getEntities($args);
+
         $memNow   = memory_get_usage(true);
-        $contacts = $this->getEntitiesWithCustomFields(
-            'lead',
-            $args,
-            function ($r) {
-                if (!empty($this->triggerModel)) {
-                    $r->setColor($this->triggerModel->getColorForLeadPoints($r->getPoints()));
-                }
-                $r->setAvailableSocialFields($this->availableSocialFields);
-            }
-        );
+//        $contacts = $this->getEntitiesWithCustomFields(
+//            'lead',
+//            $args,
+//            function ($r) {
+//                if (!empty($this->triggerModel)) {
+//                    $r->setColor($this->triggerModel->getColorForLeadPoints($r->getPoints()));
+//                }
+//                $r->setAvailableSocialFields($this->availableSocialFields);
+//            }
+//        );
+
         printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
 
         $memNow       = memory_get_usage(true);

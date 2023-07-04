@@ -3,6 +3,7 @@
 namespace Mautic\CoreBundle\Model;
 
 use Mautic\CoreBundle\Helper\InputHelper;
+use Mautic\LeadBundle\Entity\Lead;
 use Mautic\UserBundle\Entity\User;
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -295,7 +296,9 @@ class FormModel extends AbstractCommonModel
         //iterate over the results so the events are dispatched on each delete
         $batchSize = 20;
         foreach ($ids as $k => $id) {
-            $entity        = $this->getEntity($id);
+            //$entity        = $this->getEntity($id);
+            $entity = $this->em->getRepository(Lead::class)->find($id);
+
             $entities[$id] = $entity;
             if (null !== $entity) {
                 $event = $this->dispatchEvent('pre_delete', $entity);
@@ -303,13 +306,15 @@ class FormModel extends AbstractCommonModel
                 //set the id for use in events
                 $entity->deletedId = $id;
                 $this->dispatchEvent('post_delete', $entity, false, $event);
-                $this->em->clear($entity::class);
+                $this->em->detach($entity);
             }
             if (0 === (($k + 1) % $batchSize)) {
                 $this->em->flush();
             }
         }
         $this->em->flush();
+        dump(memuse());
+        $this->em->clear($entity::class);
         //retrieving the entities while here so may as well return them so they can be used if needed
         return $entities;
     }
