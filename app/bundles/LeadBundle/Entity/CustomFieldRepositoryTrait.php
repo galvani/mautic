@@ -88,7 +88,7 @@ trait CustomFieldRepositoryTrait
             foreach ($results as $result) {
                 $id = $result['id'];
                 //unset all the columns that are not fields
-                //$this->removeNonFieldColumns($result, $fixedFields);
+                $this->removeNonFieldColumns($result, $fixedFields);
 
                 foreach ($result as $k => $r) {
                     if (isset($fields[$k])) {

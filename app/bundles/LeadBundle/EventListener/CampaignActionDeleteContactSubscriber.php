@@ -78,7 +78,6 @@ class CampaignActionDeleteContactSubscriber implements EventSubscriberInterface
 
         $memNow = memory_get_usage(true);
         $event->passAll();
-        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
         gc_collect_cycles();
         printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__ - 1, memuse(), memuse(memory_get_usage(true) - $memNow));
     }

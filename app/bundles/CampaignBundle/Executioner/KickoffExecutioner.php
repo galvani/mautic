@@ -17,6 +17,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Component\Translation\TranslatorInterface;
 
 class KickoffExecutioner implements ExecutionerInterface
@@ -100,6 +101,8 @@ class KickoffExecutioner implements ExecutionerInterface
      */
     public function execute(Campaign $campaign, ContactLimiter $limiter, OutputInterface $output = null)
     {
+        $timer = new Stopwatch('campaign');
+        $timer->start('campaignRun');
         $this->campaign = $campaign;
         $this->limiter  = $limiter;
         $this->output   = ($output) ? $output : new NullOutput();
@@ -123,6 +126,9 @@ class KickoffExecutioner implements ExecutionerInterface
             }
             $this->executioner->persistSummaries();
         }
+
+        $event = $timer->stop('campaignRun');
+        dump((string) $event);
 
         return $this->counter;
     }

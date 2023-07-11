@@ -380,7 +380,6 @@ class CampaignRepository extends CommonRepository
      */
     public function getPendingContactIds($campaignId, ContactLimiter $limiter)
     {
-        $memNow = memory_get_usage(true);
         if ($limiter->hasCampaignLimit() && 0 === $limiter->getCampaignLimitRemaining()) {
             return [];
         }
@@ -430,8 +429,6 @@ class CampaignRepository extends CommonRepository
         if ($limiter->hasCampaignLimit()) {
             $limiter->reduceCampaignLimitRemaining(count($leads));
         }
-
-        printf("%s#%s: %s, +%s\n", __METHOD__, __LINE__, memuse(), memuse(memory_get_usage(true) - $memNow));
 
         return $leads;
     }

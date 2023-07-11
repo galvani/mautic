@@ -82,9 +82,7 @@ class ActionDispatcher
             $success = $pendingEvent->getSuccessful();
             $failed  = $pendingEvent->getFailures();
 
-            dump('count', count($logs));
             $this->validateProcessedLogs($logs, $success, $failed);
-            dump('count', count($logs));
 
             if ($success) {
                 $this->dispatchExecutedEvent($config, $event, $success);
@@ -100,7 +98,7 @@ class ActionDispatcher
 
         // Execute BC eventName or callback. Or support case where the listener has been converted to batchEventName but still wants to execute
         // eventName for BC support for plugins that could be listening to it's own custom event.
-        // $this->legacyDispatcher->dispatchCustomEvent($config, $logs, ($customEvent), $pendingEvent);
+        $this->legacyDispatcher->dispatchCustomEvent($config, $logs, ($customEvent), $pendingEvent);
 
         return $pendingEvent;
     }
