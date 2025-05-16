@@ -57,41 +57,6 @@ RUN set -eux; \
 		intl \
 		opcache \
 		zip \
-	;
-
-# Install system dependencies - using alpine packages
-#RUN apt install -y --no-install-recommends \
-#    git \
-#    unzip \
-#    icu-dev \
-#    libpng-dev \
-#    jpeg-dev \
-#    freetype-dev \
-#    krb5-dev \
-#    libxml2-dev \
-#    libzip-dev \
-#    oniguruma-dev \
-#    libxslt-dev \
-#    imagemagick-dev \
-#    zlib-dev \
-#    libmemcached-dev \
-#    nodejs \
-#    npm \
-#    mysql-client \
-#    rabbitmq-c-dev \
-#    libssh-dev \
-#    dcron \
-#    curl \
-#    imap-dev
-
-# Install the PHP extension installer
-#RUN curl -sSLf \
-#    -o /usr/local/bin/install-php-extensions \
-#    https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions \
-#    && chmod +x /usr/local/bin/install-php-extensions
-
-RUN set -eux; \
-    install-php-extensions \
         bcmath \
         calendar \
         exif \
@@ -158,11 +123,8 @@ RUN chmod -R 775 /app/var /app/media
 
 COPY .docker/Caddyfile /etc/caddy/Caddyfile
 
-# Configure FrankenPHP for web role
-#ENV FRANKENPHP_CONFIG="worker /app/index.php"
-ENV APP_ENV=prod
-ENV APP_DEBUG=0
 ENV MAX_REQUESTS=1000
+ENV MAUTIC_CUSTOM_DEV_HOSTS='["localhost","127.0.0.1","172.18.0.1"]'
 
 EXPOSE 80 443 443/udp
 ENTRYPOINT ["docker-entrypoint"]
@@ -170,4 +132,4 @@ HEALTHCHECK --start-period=60s CMD curl -f http://localhost:2019/metrics || exit
 CMD [ "frankenphp", "run", "--config", "/etc/caddy/Caddyfile" ]
 
 # DEV stuff
-RUN apt install -y --no-install-recommends vim
+RUN apt update && apt install -y --no-install-recommends vim && rm -rf /var/lib/apt/lists/*
