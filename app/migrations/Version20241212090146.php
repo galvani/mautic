@@ -28,7 +28,16 @@ final class Version20241212090146 extends PreUpAssertionMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("CREATE INDEX {$this->indexName} ON {$this->getPrefixedTableName(self::TABLE_NAME)} (internal_object_id);");
+        // Check if table exists
+        if (!$schema->hasTable($this->getPrefixedTableName(self::TABLE_NAME))) {
+            return;
+        }
+
+        // Check if index already exists
+        $table = $schema->getTable($this->getPrefixedTableName(self::TABLE_NAME));
+        if (!$table->hasIndex($this->indexName)) {
+            $this->addSql("CREATE INDEX {$this->indexName} ON {$this->getPrefixedTableName(self::TABLE_NAME)} (internal_object_id);");
+        }
     }
 
     public function down(Schema $schema): void

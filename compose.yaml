@@ -1,0 +1,127 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        CONTAINER_ROLE: web
+#    develop:
+#      watch:
+#        - action: sync
+#          path: .
+#          target: /app
+#          ignore:
+#            - var/
+#            - node_modules/
+#            - .git/
+#            - vendor/
+#        - action: rebuild
+#          path: composer.json
+#        - action: rebuild
+#          path: composer.lock
+#        - action: rebuild
+#          path: package.json
+#        - action: rebuild
+#          path: package-lock.json
+    restart: no
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - mautic_var:/app/var
+      - mautic_media:/app/media
+      - vendor:/app/vendor
+      - ./public/media:/app/public/media
+      - ./public/assets:/app/public/assets
+      - ./node_modules:/app/node_modules
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    environment:
+      - APP_ENV=${APP_ENV:-prod}
+      - APP_DEBUG=${APP_DEBUG:-0}
+      - MAUTIC_DB_HOST=${DB_HOST:-db}
+      - MAUTIC_DB_PORT=${DB_PORT:-3306}
+      - MAUTIC_DB_NAME=${DB_NAME:-mautic}
+      - MAUTIC_DB_USER=${DB_USER:-mautic}
+      - MAUTIC_DB_PASSWORD=${DB_PASSWORD:-mautic_password}
+      - MAUTIC_REDIS_HOST=${REDIS_HOST:-redis}
+      - MAUTIC_REDIS_PORT=${REDIS_PORT:-6379}
+      - MAUTIC_RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - MAUTIC_RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - MAUTIC_RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - MAUTIC_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - MAUTIC_RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      - MAUTIC_SITE_URL=${MAUTIC_SITE_URL:-http://localhost}
+      - MAUTIC_URL=${MAUTIC_URL:-https://${SERVER_NAME:-localhost}}
+      - SITE_URL=${SITE_URL:-https://${SERVER_NAME:-localhost}}
+      - APP_URL=${APP_URL:-https://${SERVER_NAME:-localhost}}
+      - APP_RUNTIME=Runtime\FrankenPhpSymfony\Runtime
+  worker:
+    build:
+      context: .
+      args:
+        CONTAINER_ROLE: worker
+    restart: no
+    volumes:
+      - mautic_var:/app/var
+      - mautic_media:/app/media
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    environment:
+      - APP_ENV=${APP_ENV:-prod}
+      - APP_DEBUG=${APP_DEBUG:-0}
+      - MAUTIC_DB_HOST=${DB_HOST:-db}
+      - MAUTIC_DB_PORT=${DB_PORT:-3306}
+      - MAUTIC_DB_NAME=${DB_NAME:-mautic}
+      - MAUTIC_DB_USER=${DB_USER:-mautic}
+      - MAUTIC_DB_PASSWORD=${DB_PASSWORD:-mautic_password}
+      - MAUTIC_REDIS_HOST=${REDIS_HOST:-redis}
+      - MAUTIC_REDIS_PORT=${REDIS_PORT:-6379}
+      - MAUTIC_RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - MAUTIC_RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - MAUTIC_RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - MAUTIC_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - MAUTIC_RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+
+  db:
+    image: mysql:8.0
+    restart: no
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
+      - MYSQL_DATABASE=${DB_NAME:-mautic}
+      - MYSQL_USER=${DB_USER:-mautic}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-mautic_password}
+    command: >
+      --default-authentication-plugin=mysql_native_password 
+      --character-set-server=utf8mb4 
+      --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:7-alpine
+    restart: no
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: no
+    ports:
+      - "15672:15672"  # Management interface
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
+
+volumes:
+  mautic_var:
+  mautic_media:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
+  vendor:
