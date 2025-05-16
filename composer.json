@@ -22,7 +22,8 @@
     },
   "require": {
     "composer/installers": "^1.11",
-    "mautic/core-lib": "^6.0"
+    "mautic/core-lib": "^6.0",
+    "runtime/frankenphp-symfony": "*"
   },
   "require-dev": {
     "codeception/codeception": "^5.1",
@@ -173,7 +174,8 @@
       "symfony/flex": true,
       "phpstan/extension-installer": true,
       "php-http/discovery": true,
-      "cweagans/composer-patches": true
+      "cweagans/composer-patches": true,
+      "symfony/runtime": true
     }
   },
   "extra": {

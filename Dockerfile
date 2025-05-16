@@ -22,11 +22,33 @@ ENV CONTAINER_ROLE=${CONTAINER_ROLE}
 RUN php -v && php -m
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	acl \
-	file \
-	gettext \
-	git \
-	&& rm -rf /var/lib/apt/lists/*
+    acl \
+    file \
+    gettext \
+    git \
+    unzip \
+    libicu-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libkrb5-dev \
+    libxml2-dev \
+    libzip-dev \
+    libonig-dev \
+    libxslt-dev \
+    libmagickwand-dev \
+    zlib1g-dev \
+    libmemcached-dev \
+    nodejs \
+    npm \
+    default-mysql-client \
+    librabbitmq-dev \
+    libssh-dev \
+    cron \
+    curl \
+    libc-client-dev \
+    libkrb5-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
 	install-php-extensions \
@@ -69,8 +91,7 @@ RUN set -eux; \
 #    && chmod +x /usr/local/bin/install-php-extensions
 
 RUN set -eux; \
-# Install PHP extensions
-    RUN install-php-extensions \
+    install-php-extensions \
         bcmath \
         calendar \
         exif \
@@ -110,9 +131,9 @@ RUN { \
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Copy configuration files from .docker directory
-COPY .docker/docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY .docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 COPY .docker/crontab /etc/crontabs/www-data
-RUN chmod +x /app/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint
 
 # Copy only composer files first
 COPY composer.json composer.lock /app/
@@ -138,13 +159,15 @@ RUN chmod -R 775 /app/var /app/media
 COPY .docker/Caddyfile /etc/caddy/Caddyfile
 
 # Configure FrankenPHP for web role
-ENV FRANKENPHP_CONFIG="worker /app/index.php"
+#ENV FRANKENPHP_CONFIG="worker /app/index.php"
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 ENV MAX_REQUESTS=1000
 
 EXPOSE 80 443 443/udp
+ENTRYPOINT ["docker-entrypoint"]
+HEALTHCHECK --start-period=60s CMD curl -f http://localhost:2019/metrics || exit 1
+CMD [ "frankenphp", "run", "--config", "/etc/caddy/Caddyfile" ]
 
-WORKDIR /app
-
-CMD ["/app/docker-entrypoint.sh"]
+# DEV stuff
+RUN apt install -y --no-install-recommends vim

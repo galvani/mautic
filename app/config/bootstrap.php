@@ -13,7 +13,7 @@ $vendorRootPath = dirname($reflection->getFileName(), 4);
 
 // Load cached env vars if the .env.local.php file exists
 // Run "composer dump-env prod" to create it (requires symfony/flex >=1.2)
-if (is_array($env = @include $vendorRootPath.'/.env.local.php') && (!isset($env['APP_ENV']) || ($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? $env['APP_ENV']) === $env['APP_ENV'])) {
+if (file_exists($vendorRootPath.'/.env.local.php') && is_array($env = @include $vendorRootPath.'/.env.local.php') && (!isset($env['APP_ENV']) || ($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? $env['APP_ENV']) === $env['APP_ENV'])) {
     (new Dotenv(false))->populate($env);
 } else {
     // load all the .env files
