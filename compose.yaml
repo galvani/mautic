@@ -4,28 +4,13 @@ services:
       context: .
       args:
         CONTAINER_ROLE: web
-#    develop:
-#      watch:
-#        - action: sync
-#          path: .
-#          target: /app
-#          ignore:
-#            - var/
-#            - node_modules/
-#            - .git/
-#            - vendor/
-#        - action: rebuild
-#          path: composer.json
-#        - action: rebuild
-#          path: composer.lock
-#        - action: rebuild
-#          path: package.json
-#        - action: rebuild
-#          path: package-lock.json
+    image: mautic-web:latest
     restart: no
+    env_file:
+      - .env
     ports:
-      - "80:80"
-      - "443:443"
+      - "8033:80"
+      - "8443:443"
     volumes:
       - mautic_var:/app/var
       - mautic_media:/app/media
@@ -34,9 +19,12 @@ services:
       - ./public/assets:/app/public/assets
       - ./node_modules:/app/node_modules
     depends_on:
-      - db
-      - redis
-      - rabbitmq
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
     environment:
       - APP_ENV=${APP_ENV:-prod}
       - APP_DEBUG=${APP_DEBUG:-0}
@@ -62,14 +50,18 @@ services:
       context: .
       args:
         CONTAINER_ROLE: worker
+    image: mautic-worker:latest
     restart: no
     volumes:
       - mautic_var:/app/var
       - mautic_media:/app/media
     depends_on:
-      - db
-      - redis
-      - rabbitmq
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
     environment:
       - APP_ENV=${APP_ENV:-prod}
       - APP_DEBUG=${APP_DEBUG:-0}
@@ -100,6 +92,11 @@ services:
       --default-authentication-plugin=mysql_native_password 
       --character-set-server=utf8mb4 
       --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine

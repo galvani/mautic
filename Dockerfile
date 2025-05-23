@@ -8,7 +8,7 @@ FROM dunglas/frankenphp:1-php8.3 AS frankenphp_upstream
 # https://docs.docker.com/compose/compose-file/#target
 
 # Base FrankenPHP image
-FROM frankenphp_upstream AS frankenphp_base
+FROM frankenphp_upstream AS mautic_base
 
 WORKDIR /app
 
@@ -48,6 +48,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libc-client-dev \
     libkrb5-dev \
+    libnss3-tools \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
@@ -78,7 +79,10 @@ RUN set -eux; \
         imagick \
         imap \
     ;
-# Set recommended PHP settings
+
+ENV PHP_INI_SCAN_DIR=":$PHP_INI_DIR/app.conf.d"
+COPY --link .docker/conf.d/10-app.ini $PHP_INI_DIR/app.conf.d/
+
 RUN { \
         echo 'opcache.memory_consumption=256'; \
         echo 'opcache.interned_strings_buffer=24'; \
@@ -100,21 +104,18 @@ COPY .docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 COPY .docker/crontab /etc/crontabs/www-data
 RUN chmod +x /usr/local/bin/docker-entrypoint
 
-# Copy only composer files first
-COPY composer.json composer.lock /app/
-
 # Now copy the application code
 COPY --chown=www-data:www-data . /app
 WORKDIR /app
 
 # Install Mautic dependencies
 # PROD: RUN cd /app && composer install --no-dev --optimize-autoloader
-#RUN composer install
+RUN composer install
 
 # Install NPM dependencies and generate assets
-#RUN npm ci --prefer-offline --no-audit && \
-#    npx patch-package && \
-#    bin/console mautic:assets:generate
+RUN npm ci --prefer-offline --no-audit && \
+    npx patch-package && \
+    bin/console mautic:assets:generate
 
 # Set proper permissions - with the correct directory structure
 RUN mkdir -p /app/var/cache /app/var/logs /app/var/tmp /app/var/spool /app/media/files /app/media/images
@@ -124,7 +125,7 @@ RUN chmod -R 775 /app/var /app/media
 COPY .docker/Caddyfile /etc/caddy/Caddyfile
 
 ENV MAX_REQUESTS=1000
-ENV MAUTIC_CUSTOM_DEV_HOSTS='["localhost","127.0.0.1","172.18.0.1"]'
+ENV MAUTIC_CUSTOM_DEV_HOSTS='["localhost","127.0.0.1","172.18.0.1","172.19.0.1"]'
 
 EXPOSE 80 443 443/udp
 ENTRYPOINT ["docker-entrypoint"]
